@@ -4,6 +4,15 @@ import time
 import struct
 from random import randint
 
+# -------------------------------------------------------------------
+# Helper functions
+# -------------------------------------------------------------------
+
+def log_timing_result(gate_name: str, avg_time_per_gate: float, total_iterations: int, filename: str = "output/timing_results.txt"):
+    """Log timing results to file."""
+    with open(filename, "a") as f:
+        f.write(f"{gate_name},{avg_time_per_gate:.9f},{total_iterations}\n")
+
 def time_gate_bulk(
     gate_fn, 
     gate_name: str,
@@ -77,17 +86,23 @@ def time_gate_bulk(
     print(f"Total seconds: {tot_s:.6f} s")
     print(f"over {tot_trials} iterations.")
 
-# Specific timing functions using the generic helpers
-def time_flexo_and(tot_trials: int = 1000000) -> None:
+    # Log to file
+    log_timing_result(gate_name, avg_s, tot_trials)
+
+# -------------------------------------------------------------------
+# GITM timing tests
+# -------------------------------------------------------------------
+
+def time_gitm_assign(tot_trials):
     time_gate_bulk(
-        gate_fn=emulate_flexo_and,
-        gate_name="AND",
+        gate_fn=emulate_gitm_assign,
+        gate_name="GITM ASSIGN",
         tot_trials=tot_trials,
-        input_bits=2,
-        expected_fn=lambda in1, in2: in1 and in2
+        input_bits=1,
+        expected_fn=lambda in1: in1
     )
 
-def time_gitm_and(tot_trials: int = 1000000) -> None:
+def time_gitm_and(tot_trials):
     time_gate_bulk(
         gate_fn=emulate_gitm_and,
         gate_name="GITM AND",
@@ -96,22 +111,474 @@ def time_gitm_and(tot_trials: int = 1000000) -> None:
         expected_fn=lambda in1, in2: in1 and in2
     )
 
-def time_gitm_mux(tot_trials: int = 1000000) -> None:
+def time_gitm_or(tot_trials):
+    time_gate_bulk(
+        gate_fn=emulate_gitm_or,
+        gate_name="GITM OR",
+        tot_trials=tot_trials,
+        input_bits=2,
+        expected_fn=lambda in1, in2: in1 or in2
+    )
+
+def time_gitm_not(tot_trials):
+    time_gate_bulk(
+        gate_fn=emulate_gitm_not,
+        gate_name="GITM NOT",
+        tot_trials=tot_trials,
+        input_bits=1,
+        expected_fn=lambda in1: 1 - in1
+    )
+
+def time_gitm_nand(tot_trials):
+    time_gate_bulk(
+        gate_fn=emulate_gitm_nand,
+        gate_name="GITM NAND",
+        tot_trials=tot_trials,
+        input_bits=2,
+        expected_fn=lambda in1, in2: 1 - (in1 and in2)
+    )
+
+def time_gitm_xor(tot_trials):
+    time_gate_bulk(
+        gate_fn=emulate_gitm_xor,
+        gate_name="GITM XOR",
+        tot_trials=tot_trials,
+        input_bits=2,
+        expected_fn=lambda in1, in2: in1 ^ in2
+    )
+
+def time_gitm_mux(tot_trials):
     time_gate_bulk(
         gate_fn=emulate_gitm_mux,
         gate_name="GITM MUX",
         tot_trials=tot_trials,
         input_bits=3,
-        expected_fn=lambda sel, in1, in2: in1 if sel == 0 else in2
+        expected_fn=lambda sel, in1, in2: in2 if sel else in1
     )
 
-def time_flexo_sha1_round_average(num_iterations: int = 100) -> None:
-    print(f"\n=== SHA1 Round Average Timing ({num_iterations} iterations) ===")
-    
+# -------------------------------------------------------------------
+# Flexo timing tests
+# -------------------------------------------------------------------
+
+def time_flexo_and(tot_trials: int = 100000) -> None:
+    """Time Flexo AND gate over multiple iterations."""
+    print(f"\n=== Flexo AND Average Timing ({tot_trials} iterations) ===")
     total_time = 0.0
     
-    for i in range(num_iterations):
-        # Generate random inputs for each iteration
+    for i in range(tot_trials):
+        # Generate random inputs (2 bits)
+        a = randint(0, 1)
+        b = randint(0, 1)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_and(a, b, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10,000 iterations
+        if (i + 1) % 10000 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo AND Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per gate: {avg_time:.9f} s")
+    print(f"Average time per gate (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo AND", avg_time, tot_trials)
+
+def time_flexo_or(tot_trials: int = 100000) -> None:
+    """Time Flexo OR gate over multiple iterations."""
+    print(f"\n=== Flexo OR Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random inputs (2 bits)
+        a = randint(0, 1)
+        b = randint(0, 1)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_or(a, b, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10,000 iterations
+        if (i + 1) % 10000 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo OR Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per gate: {avg_time:.9f} s")
+    print(f"Average time per gate (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo OR", avg_time, tot_trials)
+
+def time_flexo_not(tot_trials: int = 100000) -> None:
+    """Time Flexo NOT gate over multiple iterations."""
+    print(f"\n=== Flexo NOT Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random input (1 bit)
+        a = randint(0, 1)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_not(a, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10,000 iterations
+        if (i + 1) % 10000 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo NOT Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per gate: {avg_time:.9f} s")
+    print(f"Average time per gate (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo NOT", avg_time, tot_trials)
+
+def time_flexo_nand(tot_trials: int = 100000) -> None:
+    """Time Flexo NAND gate over multiple iterations."""
+    print(f"\n=== Flexo NAND Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random inputs (2 bits)
+        a = randint(0, 1)
+        b = randint(0, 1)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_nand(a, b, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10,000 iterations
+        if (i + 1) % 10000 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo NAND Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per gate: {avg_time:.9f} s")
+    print(f"Average time per gate (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo NAND", avg_time, tot_trials)
+
+def time_flexo_xor(tot_trials: int = 100000) -> None:
+    """Time Flexo XOR gate over multiple iterations."""
+    print(f"\n=== Flexo XOR Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random inputs (2 bits)
+        a = randint(0, 1)
+        b = randint(0, 1)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_xor(a, b, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10,000 iterations
+        if (i + 1) % 10000 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo XOR Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per gate: {avg_time:.9f} s")
+    print(f"Average time per gate (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo XOR", avg_time, tot_trials)
+
+def time_flexo_xor3(tot_trials: int = 100000) -> None:
+    """Time Flexo XOR3 gate over multiple iterations."""
+    print(f"\n=== Flexo XOR3 Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random inputs (3 bits)
+        a = randint(0, 1)
+        b = randint(0, 1)
+        c = randint(0, 1)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_xor3(a, b, c, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10,000 iterations
+        if (i + 1) % 10000 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo XOR3 Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per gate: {avg_time:.9f} s")
+    print(f"Average time per gate (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo XOR3", avg_time, tot_trials)
+
+def time_flexo_xor4(tot_trials: int = 100000) -> None:
+    """Time Flexo XOR4 gate over multiple iterations."""
+    print(f"\n=== Flexo XOR4 Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random inputs (4 bits)
+        a = randint(0, 1)
+        b = randint(0, 1)
+        c = randint(0, 1)
+        d = randint(0, 1)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_xor4(a, b, c, d, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10,000 iterations
+        if (i + 1) % 10000 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo XOR4 Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per gate: {avg_time:.9f} s")
+    print(f"Average time per gate (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo XOR4", avg_time, tot_trials)
+
+def time_flexo_mux(tot_trials: int = 100000) -> None:
+    """Time Flexo MUX gate over multiple iterations."""
+    print(f"\n=== Flexo MUX Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random inputs (3 bits: sel, in1, in2)
+        sel = randint(0, 1)
+        in1 = randint(0, 1)
+        in2 = randint(0, 1)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_mux(sel, in1, in2, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10,000 iterations
+        if (i + 1) % 10000 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo MUX Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per gate: {avg_time:.9f} s")
+    print(f"Average time per gate (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo MUX", avg_time, tot_trials)
+
+def time_flexo_alu(tot_trials: int = 1000) -> None:
+    """Time Flexo ALU over multiple iterations."""
+    print(f"\n=== Flexo ALU Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random inputs
+        x_data = randint(0, 15)      # 4 bits
+        y_data = randint(0, 15)      # 4 bits
+        control_data = randint(0, 63) # 6 bits
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_alu(x_data, y_data, control_data, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 100 iterations
+        if (i + 1) % 100 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo ALU Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per ALU operation: {avg_time:.9f} s")
+    print(f"Average time per ALU operation (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo ALU", avg_time, tot_trials)
+
+def time_flexo_adder8(tot_trials: int = 1000) -> None:
+    """Time Flexo 8-bit adder over multiple iterations."""
+    print(f"\n=== Flexo 8-bit ADDER Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random 8-bit inputs
+        a = randint(0, 255)
+        b = randint(0, 255)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_adder8(a, b, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 100 iterations
+        if (i + 1) % 100 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo 8-bit ADDER Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per addition: {avg_time:.9f} s")
+    print(f"Average time per addition (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo 8-bit ADDER", avg_time, tot_trials)
+
+def time_flexo_adder16(tot_trials: int = 1000) -> None:
+    """Time Flexo 16-bit adder over multiple iterations."""
+    print(f"\n=== Flexo 16-bit ADDER Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random 16-bit inputs
+        a = randint(0, 65535)
+        b = randint(0, 65535)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_adder16(a, b, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 100 iterations
+        if (i + 1) % 100 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo 16-bit ADDER Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per addition: {avg_time:.9f} s")
+    print(f"Average time per addition (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo 16-bit ADDER", avg_time, tot_trials)
+
+def time_flexo_adder32(tot_trials: int = 100) -> None:
+    """Time Flexo 32-bit adder over multiple iterations."""
+    print(f"\n=== Flexo 32-bit ADDER Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random 32-bit inputs
+        a = randint(0, 0xFFFFFFFF)
+        b = randint(0, 0xFFFFFFFF)
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_adder32(a, b, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10 iterations
+        if (i + 1) % 10 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo 32-bit ADDER Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per addition: {avg_time:.9f} s")
+    print(f"Average time per addition (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo 32-bit ADDER", avg_time, tot_trials)
+
+def time_flexo_sha1_round(tot_trials: int = 100) -> None:
+    """Time Flexo SHA-1 round over multiple iterations."""
+    print(f"\n=== Flexo SHA-1 Round Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random test inputs
         state = [randint(0, 0xFFFFFFFF) for _ in range(5)]
         w = randint(0, 0xFFFFFFFF)
         
@@ -124,26 +591,62 @@ def time_flexo_sha1_round_average(num_iterations: int = 100) -> None:
         tot_s = tot_ns / 1_000_000_000
         total_time += tot_s
         
-        # Optionally print progress every 10 iterations
+        # Progress update every 10 iterations
         if (i + 1) % 10 == 0:
-            print(f"Completed {i + 1}/{num_iterations} iterations...")
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
     
     # Calculate and display results
-    avg_time = total_time / num_iterations
-    
-    print(f"\n=== SHA1 Round Average Results ===")
-    print(f"Total iterations: {num_iterations}")
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo SHA-1 Round Average Results ===")
+    print(f"Total iterations: {tot_trials}")
     print(f"Total execution time: {total_time:.6f} s")
-    print(f"Average execution time per round: {avg_time:.9f} s")
-    print(f"Average time per round (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+    print(f"Average execution time per SHA-1 round: {avg_time:.9f} s")
+    print(f"Average time per SHA-1 round (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
 
-def time_flexo_simon32_average(num_iterations: int = 100) -> None:
-    print(f"\n=== SIMON32 Average Timing ({num_iterations} iterations) ===")
-    
+    # Log to file
+    log_timing_result("Flexo SHA-1 Round", avg_time, tot_trials)
+
+def time_flexo_aes_round(tot_trials: int = 100) -> None:
+    """Time Flexo AES round over multiple iterations."""
+    print(f"\n=== Flexo AES Round Average Timing ({tot_trials} iterations) ===")
     total_time = 0.0
     
-    for i in range(num_iterations):
-        # Generate random inputs for each iteration
+    for i in range(tot_trials):
+        # Generate random test inputs
+        input_block = [randint(0, 255) for _ in range(16)]
+        key_block = [randint(0, 255) for _ in range(16)]
+        
+        # Time the emulation
+        start_time = time.perf_counter_ns()
+        output, err_out = emulate_flexo_aes_round(input_block, key_block, debug=False)
+        end_time = time.perf_counter_ns()
+        
+        tot_ns = end_time - start_time
+        tot_s = tot_ns / 1_000_000_000
+        total_time += tot_s
+        
+        # Progress update every 10 iterations
+        if (i + 1) % 10 == 0:
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
+    
+    # Calculate and display results
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo AES Round Average Results ===")
+    print(f"Total iterations: {tot_trials}")
+    print(f"Total execution time: {total_time:.6f} s")
+    print(f"Average execution time per AES round: {avg_time:.9f} s")
+    print(f"Average time per AES round (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+
+    # Log to file
+    log_timing_result("Flexo AES Round", avg_time, tot_trials)
+
+def time_flexo_simon32(tot_trials: int = 100) -> None:
+    """Time Flexo SIMON32 block over multiple iterations."""
+    print(f"\n=== Flexo SIMON32 Average Timing ({tot_trials} iterations) ===")
+    total_time = 0.0
+    
+    for i in range(tot_trials):
+        # Generate random test inputs
         input_block = [randint(0, 255) for _ in range(4)]   # 4-byte (32-bit) block
         key_block = [randint(0, 255) for _ in range(8)]     # 8-byte (64-bit) key
         
@@ -156,235 +659,76 @@ def time_flexo_simon32_average(num_iterations: int = 100) -> None:
         tot_s = tot_ns / 1_000_000_000
         total_time += tot_s
         
-        # Optionally print progress every 10 iterations
+        # Progress update every 10 iterations
         if (i + 1) % 10 == 0:
-            print(f"Completed {i + 1}/{num_iterations} iterations...")
+            print(f"Completed {i + 1}/{tot_trials} iterations...")
     
     # Calculate and display results
-    avg_time = total_time / num_iterations
-    
-    print(f"\n=== SIMON32 Average Results ===")
-    print(f"Total iterations: {num_iterations}")
+    avg_time = total_time / tot_trials
+    print(f"\n=== Flexo SIMON32 Average Results ===")
+    print(f"Total iterations: {tot_trials}")
     print(f"Total execution time: {total_time:.6f} s")
-    print(f"Average execution time per block: {avg_time:.9f} s")
-    print(f"Average time per block (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
+    print(f"Average execution time per SIMON32 block: {avg_time:.9f} s")
+    print(f"Average time per SIMON32 block (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
 
-def time_flexo_alu_average(num_iterations: int = 100) -> None:
-    print(f"\n=== ALU Average Timing ({num_iterations} iterations) ===")
+    # Log to file
+    log_timing_result("Flexo SIMON32", avg_time, tot_trials)
+
+# -------------------------------------------------------------------
+# Timing test runner
+# -------------------------------------------------------------------
+
+TRIAL_COUNT_S = 1000000
+TRIAL_COUNT_M = 1000
+TRIAL_COUNT_S = 50
+
+def run_all_gitm_timing_tests(tot_trials: int = 1000000) -> None:
+    """Run all GITM timing tests with the specified number of trials."""
+    print(f"\n{'='*50}")
+    print(f"Running GITM timing tests")
+    print(f"{'='*50}")
     
-    total_time = 0.0
+    time_gitm_assign(TRIAL_COUNT_S)
+    time_gitm_and(TRIAL_COUNT_S)
+    time_gitm_or(TRIAL_COUNT_S)
+    time_gitm_not(TRIAL_COUNT_S)
+    time_gitm_nand(TRIAL_COUNT_S)
+    time_gitm_xor(TRIAL_COUNT_S)
+    time_gitm_mux(TRIAL_COUNT_S)
     
-    for i in range(num_iterations):
-        # Generate random inputs for each iteration
-        x_data = randint(0, 15)       # 4 bits
-        y_data = randint(0, 15)       # 4 bits
-        control_data = randint(0, 63) # 6 bits
-        
-        # Time the emulation
-        start_time = time.perf_counter_ns()
-        output, err_out = emulate_flexo_alu(x_data, y_data, control_data, debug=False)
-        end_time = time.perf_counter_ns()
-        
-        tot_ns = end_time - start_time
-        tot_s = tot_ns / 1_000_000_000
-        total_time += tot_s
-        
-        # Optionally print progress every 10 iterations
-        if (i + 1) % 10 == 0:
-            print(f"Completed {i + 1}/{num_iterations} iterations...")
+    print(f"\n{'='*50}")
+    print("All GITM timing tests completed!")
+    print(f"{'='*50}")
+
+def run_all_flexo_timing_tests(tot_trials: int = 1000) -> None:
+    """Run all Flexo timing tests with the specified number of trials."""
+    print(f"\n{'='*50}")
+    print(f"Running Flexo timing tests")
+    print(f"{'='*50}")
     
-    # Calculate and display results
-    avg_time = total_time / num_iterations
+    # Basic gates with higher trial counts
+    time_flexo_and(TRIAL_COUNT_S)
+    time_flexo_or(TRIAL_COUNT_S)
+    time_flexo_not(TRIAL_COUNT_S)
+    time_flexo_nand(TRIAL_COUNT_S)
+    time_flexo_xor(TRIAL_COUNT_S)
+    time_flexo_xor3(TRIAL_COUNT_S)
+    time_flexo_xor4(TRIAL_COUNT_S)
+    time_flexo_mux(TRIAL_COUNT_S)
     
-    print(f"\n=== ALU Average Results ===")
-    print(f"Total iterations: {num_iterations}")
-    print(f"Total execution time: {total_time:.6f} s")
-    print(f"Average execution time per operation: {avg_time:.9f} s")
-    print(f"Average time per operation (nanoseconds): {avg_time * 1_000_000_000:.2f} ns")
-
-def emulate_flexo_sha1_2blocks_timing(input_data, debug=False):
-    """Emulate SHA1 2-blocks by calling sha1_block twice"""
-
-    # START TIMING HERE
-    start_time = time.perf_counter_ns()
+    # Complex circuits with fewer trials
+    time_flexo_alu(TRIAL_COUNT_S)
+    time_flexo_adder8(TRIAL_COUNT_S)
+    time_flexo_adder16(TRIAL_COUNT_S)
+    time_flexo_adder32(TRIAL_COUNT_S)
+    time_flexo_sha1_round(TRIAL_COUNT_S)
+    time_flexo_aes_round(TRIAL_COUNT_S)
+    time_flexo_simon32(TRIAL_COUNT_S)
     
-    INPUT_ADDR   = 0x200000
-    STATES_ADDR  = 0x201000
-    PAGE_SIZE_LOCAL = 0x1000
-
-    SHA1_BLOCK_ADDR      = 0xa2820
-    SHA1_BLOCK_RET_ADDR  = 0xa2cdf  # Return address from objdump
-
-    loader   = ELFLoader("gates/flexo/sha1/sha1_2blocks-6.elf")
-    emulator = MuWMEmulator(name='flexo-sha1-2blocks', loader=loader, debug=True)
-
-    # Allocate memory for input blocks and state
-    emulator.uc.mem_map(INPUT_ADDR, PAGE_SIZE_LOCAL * 3)
-
-    # Initialize SHA-1 state (standard initial values)
-    initial_state = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
-    emulator.uc.mem_write(STATES_ADDR, struct.pack("<5I", *initial_state))
-
-    def hook_round_ret(uc, address, size, user_data):
-        nonlocal start_time  # Allow access to start_time from outer scope
-        round_addresses = [0x1560, 0x28e90, 0x50820, 0x7a560]
-        if address in round_addresses:
-            state = list(struct.unpack("<5I", uc.mem_read(STATES_ADDR, 20)))
-            
-            # Determine round type based on address
-            round_type = round_addresses.index(address) + 1
-            
-            if debug:
-                print(f"Round {emulator.round_counter} (sha1_round{round_type}): {[hex(x) for x in state]}")
-            
-            # Increment counter for next round
-            emulator.round_counter += 1
-
-            if emulator.round_counter == [81]:
-                emulator.round_counter = 1  # Reset after 80 rounds
-
-            # Reset state at start of round 67
-            if emulator.round_counter == 67:
-                # END TIMING HERE
-                end_time = time.perf_counter_ns()
-                emulator.execution_time_ns = end_time - start_time
-                uc.stop()
-
-        return False
-
-    # Hook for PLT calls (rand, memset, memcpy) - needed for library function emulation
-    for address in [0x7a594]:
-        emulator.rsb.add_exception_addr(address)
-
-    def hook_plt_calls(uc, address, size, user_data):
-        # rand calls inside weird SHA-1 - return deterministic value
-        if address in [0x158f, 0x28ebf, 0x5084f, 0x7a58f]:
-            uc.reg_write(UC_X86_REG_RAX, 0x12345678)
-            emulator.skip_curr_insn()
-            return True
-        # memset@plt at 0xa284f
-        elif address == 0xa284f:
-            rdi = uc.reg_read(UC_X86_REG_RDI)
-            rsi = uc.reg_read(UC_X86_REG_RSI)
-            rdx = uc.reg_read(UC_X86_REG_RDX)
-            data = bytes([rsi & 0xFF] * int(rdx))
-            uc.mem_write(rdi, data)
-            emulator.skip_curr_insn()
-            return True
-        # memcpy@plt at 0xa2869
-        elif address == 0xa2869:
-            rdi = int(uc.reg_read(UC_X86_REG_RDI))
-            rsi = int(uc.reg_read(UC_X86_REG_RSI))
-            rdx = int(uc.reg_read(UC_X86_REG_RDX))
-            try:
-                data = bytes(uc.mem_read(rsi, rdx))
-                uc.mem_write(rdi, data)
-                if debug and rdx >= 16:
-                    words = struct.unpack("<4I", data[:16])
-                    print(f"memcpy: copied {rdx} bytes, first 4 words: {[hex(w) for w in words]}")
-            except Exception as e:
-                if debug:
-                    print(f"memcpy error: {e}")
-            emulator.skip_curr_insn()
-            return True
-        return False
-
-    # Add hooks
-    emulator.uc.hook_add(UC_HOOK_CODE, hook_plt_calls)
-    emulator.uc.hook_add(UC_HOOK_CODE, hook_round_ret)
-
-    # Split input into two 16-word blocks
-    block1 = input_data[:16]
-    block2 = input_data[16:32]
-
-    # Process first block
-    if debug:
-        print("=== PROCESSING FIRST BLOCK ===")
-        print(f"Block 1: {[hex(x) for x in block1]}")
-        print(f"Initial state: {[hex(x) for x in initial_state]}")
-    
-    emulator.uc.mem_write(INPUT_ADDR, struct.pack("<16I", *block1))
-    emulator.code_start_address = SHA1_BLOCK_ADDR
-    emulator.code_exit_addr = SHA1_BLOCK_RET_ADDR
-    emulator.uc.reg_write(UC_X86_REG_RDI, INPUT_ADDR)    # block pointer
-    emulator.uc.reg_write(UC_X86_REG_RSI, STATES_ADDR)   # states pointer
-    emulator.uc.reg_write(UC_X86_REG_RDX, 0)             # do_ref = false
-    
-    emulator.emulate()
-    print(f"Emulation finished at round {emulator.round_counter}.")
-    
-    # RETURN TIMING INFORMATION HERE TO CALLER
-    execution_time_ns = getattr(emulator, 'execution_time_ns', 0)
-    execution_time_s = execution_time_ns / 1_000_000_000
-    return execution_time_s, emulator.round_counter
-
-def time_flexo_sha1_2blocks(tot_trials: int = 100) -> None:
-    """
-    Times SHA1 2-blocks emulation over multiple iterations and outputs average execution time.
-    This function emulates the first 66 rounds of SHA1 processing.
-    
-    Args:
-        tot_trials: Number of times to execute the emulation (default 100)
-    """
-    print(f"\n=== SHA1 2-Blocks Timing ({tot_trials} trials) ===")
-    
-    total_time = 0.0
-    successful_runs = 0
-    
-    for i in range(tot_trials):
-        # Generate random 32-word input (2 blocks of 16 words each)
-        input_data = [randint(0, 0xFFFFFFFF) for _ in range(32)]
-        
-        try:
-            # Time the emulation
-            execution_time_s, round_counter = emulate_flexo_sha1_2blocks_timing(input_data, debug=False)
-            total_time += execution_time_s
-            successful_runs += 1
-            
-        except Exception as e:
-            print(f"Trial {i + 1} failed: {e}")
-            continue
-        
-        # Optionally print progress every 10 iterations
-        if (i + 1) % 10 == 0:
-            print(f"Completed {i + 1}/{tot_trials} trials...")
-    
-    # Calculate and display results
-    if successful_runs > 0:
-        avg_time = total_time / successful_runs
-        avg_time_ns = avg_time * 1_000_000_000
-        
-        print(f"\n=== SHA1 2-Blocks Timing Results ===")
-        print(f"Total trials: {tot_trials}")
-        print(f"Successful runs: {successful_runs}/{tot_trials} ({(successful_runs/tot_trials)*100:.2f}%)")
-        print(f"Total execution time: {total_time:.6f} s")
-        print(f"Average execution time (first 66 rounds): {avg_time:.9f} s")
-        print(f"Average time (nanoseconds): {avg_time_ns:.2f} ns")
-        print(f"Rounds processed per trial: 66")
-    else:
-        print("No successful runs completed!")
+    print(f"\n{'='*50}")
+    print("All Flexo timing tests completed!")
+    print(f"{'='*50}")
 
 if __name__ == "__main__":
-    # Bulk timing tests
-    # print("=== Bulk Timing Tests ===")
-    # time_flexo_and(tot_trials=1000)
-    # print()
-    # time_gitm_and(tot_trials=1000)
-    # print()
-    # time_gitm_mux(tot_trials=1000)
-    # print()
-    
-    # # SHA1 round timing tests
-    # print("=== SHA1 Round Timing Tests ===")
-    # time_flexo_sha1_round_average(num_iterations=1)
-    
-    # # SIMON32 timing tests
-    # print("=== SIMON32 Timing Tests ===")
-    # time_flexo_simon32_average(num_iterations=1)
-    
-    # ALU timing tests
-    print("=== ALU Timing Tests ===")
-    time_flexo_alu_average(num_iterations=100)
-    
-    # SHA1 2-blocks timing test (first 66 rounds)
-    time_flexo_sha1_2blocks(tot_trials=1)
+    run_all_gitm_timing_tests()
+    run_all_flexo_timing_tests()
