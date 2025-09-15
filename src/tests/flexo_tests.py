@@ -549,6 +549,9 @@ def emulate_flexo_alu(x_data, y_data, control_data, debug=False):
     return result, err_out
 
 def emulate_flexo_sha1_2blocks(block1, block2, debug=False):
+    # measure start of round 67
+    # start_time = time.perf_counter_ns()
+
     INPUT_ADDR   = 0x200000
     STATES_ADDR  = 0x201000
     PAGE_SIZE_LOCAL = 0x1000
@@ -587,6 +590,12 @@ def emulate_flexo_sha1_2blocks(block1, block2, debug=False):
             except:
                 pass
             emulator.round_count[0] += 1
+
+            # measure start of round 67
+            # if emulator.round_count[0] == 67:
+            #     end_time = time.perf_counter_ns()
+            #     elapsed_s = (end_time - start_time) / 1_000_000
+            #     print(f"=== EMULATION TIME (at start of round 67): {elapsed_s:.6f} s ===")
         return False
 
     def hook_after_sha1_block(uc, address, size, user_data):
