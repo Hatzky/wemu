@@ -1,6 +1,6 @@
 # WeMu: Effective and Scalable Emulation of Microarchitectural Weird Machines
 
-This repository contains the artifact for the paper "WeMu: Effective and Scalable Emulation of Microarchitectural Weird Machines" submitted to uASC 2026 (<paper_url>).
+This repository contains the artifact for the paper [WeMu: Effective and Scalable Emulation of Microarchitectural Weird Machines](https://uasc.cc/proceedings26/uasc26-vanspauwen.pdf) submitted to uASC 2026.
 
 WeMu is the first emulation framework designed specifically for analyzing Microarchitectural Weird Machines (µWMs), enabling observation and reverse engineering of hidden microarchitectural computations.
 
@@ -121,3 +121,15 @@ The [`MuWMEmulator`](./src/emulator.py) produces execution traces for debugging 
 
 # License
 This project is licensed under the MIT License. See the [`LICENSE`](./LICENSE) file for full details.
+
+# Citation
+If you use or extend this work, please cite it as:
+```
+@inproceedings{vanspauwen2026wemu,
+  title     = {WeMu: Effective and Scalable Emulation of Microarchitectural Weird Machines},
+  author    = {Vanspauwen, Dries and Daniel, Lesly-Ann and Van Bulck, Jo},
+  booktitle = {2nd Microarchitecture Security Conference ({uASC})},
+  month     = Feb,
+  year      = 2026
+}
+```
