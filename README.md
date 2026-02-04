@@ -9,7 +9,7 @@ WeMu is the first emulation framework designed specifically for analyzing Microa
 ### Option 1: Docker (Recommended)
 ```bash
 # Clone and build (one-time setup)
-git clone <paper_artifact_repo.git>
+git clone https://github.com/driesvanspauwen/wemu.git
 cd wemu
 docker build -t wemu .
 
