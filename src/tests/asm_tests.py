@@ -3,6 +3,26 @@ from loader import AsmLoader
 from gates.asm import *
 from unicorn.x86_const import *
 
+#My gate
+def emulate_asm_nand(in1, in2, debug=False):
+    code = get_asm_nand()
+    loader = AsmLoader(code)
+    emulator = MuWMEmulator(name='nand', loader=loader, debug=debug)
+
+    in1_addr = emulator.data_start_addr
+    in2_addr = emulator.data_start_addr + emulator.cache.line_size
+    out_addr = emulator.data_start_addr + 2 * emulator.cache.line_size
+
+    emulator.uc.mem_write(in1_addr, bytes([in1 & 1]))
+    emulator.uc.mem_write(in2_addr, bytes([in2 & 1]))
+
+    emulator.uc.reg_write(UC_X86_REG_RDI, out_addr)
+    emulator.uc.reg_write(UC_X86_REG_RSI, in1_addr)
+    emulator.uc.reg_write(UC_X86_REG_RDX, in2_addr)
+
+    emulator.emulate()
+    return emulator.cache.is_cached(out_addr)
+
 def emulate_asm_assign(in1, debug=False):
     code = get_asm_exception_assign(in1)
     loader = AsmLoader(code)

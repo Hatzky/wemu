@@ -131,3 +131,32 @@ def get_asm_exception_not(in1):
         res += "mov [r13], byte 0\n"
     res += ASM_EXCEPTION_NOT
     return res
+
+# My custom nand gate
+ASM_NAND = """
+call label3
+
+label2:
+xor rax, rax
+%rep 50
+    add rax, [rsp + rax]
+    and rax, 0
+%endrep
+
+mov r11, [rdi]
+lfence
+
+label3:
+lea rax, [rel label4]
+mov qword [rsp], rax
+mov r11, [rsi]
+add r11, [rdx]
+add qword [rsp], r11
+ret
+
+label4:
+nop
+"""
+
+def get_asm_nand():
+    return ASM_START + ASM_NAND

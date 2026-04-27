@@ -136,7 +136,6 @@ def emulate_flexo_not(in1: int, debug: bool = False) -> int:
         debug=debug
     )
 
-
 def emulate_flexo_nand(in1: int, in2: int, debug: bool = False) -> int:
     return _emulate_boolean_gate(
         name="flexo-nand",
@@ -148,6 +147,31 @@ def emulate_flexo_nand(in1: int, in2: int, debug: bool = False) -> int:
             UC_X86_REG_RDI: in1 & 0x1,
             UC_X86_REG_RSI: in2 & 0x1,
             UC_X86_REG_RDX: OUT_ADDR_BOOL,
+        },
+        debug=debug
+    )
+
+# My custom nand gate 
+OUT_ADDR_BOOL = 0x1000_0000
+IN1_ADDR      = 0x1000_1000
+IN2_ADDR      = 0x1000_2000
+PAGE_SIZE     = 0x1000
+
+def emulate_custom_nand(in1: int, in2: int, debug: bool = False) -> int:
+    return _emulate_boolean_gate(
+        name="flexo-nand",
+        elf_path="gates/flexo/gates/gate_nand.elf",
+        start_addr=0x4013bd,
+        end_addr=0x401597,
+        regs_setup={
+            UC_X86_REG_RDI: OUT_ADDR_BOOL,
+            UC_X86_REG_RSI: IN1_ADDR,
+            UC_X86_REG_RDX: IN2_ADDR,
+        },
+        init_memory={
+            IN1_ADDR: in1 & 1,
+            IN2_ADDR: in2 & 1,
+            OUT_ADDR_BOOL: 0,
         },
         debug=debug
     )

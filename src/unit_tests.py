@@ -42,6 +42,11 @@ def test_asm_and_or() -> bool:
     verifier = lambda a, b, c: (a and b) or c
     return run_gate_test('AND-OR', emulate_asm_and_or, verifier, 3)
 
+# My test
+def test_asm_nand() -> bool:
+    verifier = lambda a, b: not (a and b)
+    return run_gate_test('NAND', emulate_asm_nand, verifier, 2)
+
 ##########################################
 # GITM tests
 ##########################################
@@ -93,6 +98,11 @@ def test_flexo_not() -> bool:
 def test_flexo_nand() -> bool:
     verifier = lambda a, b: not (a and b)
     return run_gate_test('FLEXO-NAND', emulate_flexo_nand, verifier, 2)
+
+# My custom nand gate
+def test_flexo_custom_nand() -> bool:
+    verifier = lambda a, b: not (a and b)
+    return run_gate_test('CUSTOM-NAND', emulate_custom_nand, verifier, 2)
 
 def test_flexo_xor() -> bool:
     verifier = lambda a, b: a ^ b
